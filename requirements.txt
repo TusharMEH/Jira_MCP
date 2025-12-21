@@ -1,0 +1,9 @@
+mcp-atlassian
+langchain_groq
+langchain
+langchain_community
+langchain_core
+langchain_openai
+pdfplumber
+faiss-cpu
+sentence_transformers
