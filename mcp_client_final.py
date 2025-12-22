@@ -7,10 +7,10 @@ Connects OpenAI LLM to:
 
 import asyncio
 import os
-import pickle                                          # ← NEW: For loading chunks
-import faiss                                           # ← NEW: For FAISS index
-import numpy as np                                     # ← NEW: For embeddings
-from sentence_transformers import SentenceTransformer # ← NEW: For encoding queries
+import pickle                                          
+import faiss                                           
+import numpy as np                                     
+from sentence_transformers import SentenceTransformer 
 from mcp import ClientSession, StdioServerParameters
 from mcp.client.stdio import stdio_client
 from langchain_openai import ChatOpenAI
@@ -29,7 +29,7 @@ KB_INDEX_PATH = "kb_faiss_index.bin"
 KB_CHUNKS_PATH = "kb_chunks.pkl"
 KB_EMBEDDING_MODEL = "all-MiniLM-L6-v2"
 
-# Global variables for KB (loaded once)
+
 kb_index = None
 kb_chunks = None
 kb_model = None
@@ -102,9 +102,6 @@ def search_knowledge_base(query: str, top_k: int = 2) -> list:
     return results
 
 
-# ============================================================================
-# NEW: KB Retriever Tool Definition (for LangChain)
-# ============================================================================
 
 def create_kb_retriever_tool():
     """
@@ -135,9 +132,6 @@ def create_kb_retriever_tool():
     }
 
 
-# ============================================================================
-# NEW: Execute KB Tool (handles the actual search)
-# ============================================================================
 
 def execute_kb_tool(tool_name: str, tool_args: dict) -> str:
     """
@@ -162,25 +156,21 @@ def execute_kb_tool(tool_name: str, tool_args: dict) -> str:
     return f"Unknown KB tool: {tool_name}"
 
 
-# ============================================================================
-# END OF NEW KB SECTION
-# ============================================================================
 
 
 async def main():
     print("\n" + "="*70)
-    print("🤖 OpenAI LLM + Knowledge Base + Jira MCP Integration")  # ← CHANGED: Updated title
+    print("🤖 OpenAI LLM + Knowledge Base + Jira MCP Integration")  
     print("="*70)
     
     # ==================================================================
     # CONFIGURATION
     # ==================================================================
     
-    # OpenAI Configuration
+    
     OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")  
     OPENAI_MODEL = os.getenv("OPENAI_MODEL", "gpt-4o-mini")
     
-    # Your Jira Project Key
     JIRA_PROJECT_KEY = "IT"
     
     
@@ -249,16 +239,14 @@ async def main():
             print("\nConverting MCP tools to LangChain format...")
             langchain_tools = []
             
-            # ============================================================
-            # NEW: Add KB Retriever Tool FIRST (so it's prioritized)
-            # ============================================================
+        
             if kb_loaded:
                 kb_tool = create_kb_retriever_tool()
                 langchain_tools.append(kb_tool)
                 print("✓ Added: search_it_knowledge_base (KB Retriever)")
-            # ============================================================
             
-            # Add MCP Jira tools
+            
+            
             for tool in tools_response.tools:
                 langchain_tools.append({
                     "type": "function",
@@ -270,23 +258,23 @@ async def main():
                 })
             
             llm_with_tools = llm.bind_tools(langchain_tools)
-            print(f"✓ OpenAI now has access to {len(langchain_tools)} tools!")  # ← CHANGED: says "tools" not "Jira tools"
+            print(f"✓ OpenAI now has access to {len(langchain_tools)} tools!")  
             
             
             # ==================================================================
             # STEP 4: Interactive Chat
             # ==================================================================
-            print("\n=== STEP 4: Chat with IT Support + Jira ===")  # ← CHANGED
+            print("\n=== STEP 4: Chat with IT Support + Jira ===")  
             print("\n💡 Example queries you can try:")
-            print("   • 'How do I change my password?' (KB)")           # ← NEW
-            print("   • 'My screen is frozen, what should I do?' (KB)") # ← NEW
-            print("   • 'My account is locked' (KB)")                    # ← NEW
+            print("   • 'How do I change my password?' (KB)")           
+            print("   • 'My screen is frozen, what should I do?' (KB)") 
+            print("   • 'My account is locked' (KB)")                    
             print(f"   • 'Create a ticket: Cannot access email' (Jira)")
             print(f"   • 'Get status of {JIRA_PROJECT_KEY}-1' (Jira)")
             print("\nType 'quit' to exit, 'tools' to list tools, 'clear' to reset history\n")
             
             # ============================================================
-            # CHANGED: Updated System Prompt for KB + Jira workflow
+            #  System Prompt for KB + Jira workflow
             # ============================================================
             SYSTEM_PROMPT = f"""You are a helpful IT Support assistant with access to:
 1. IT Support Knowledge Base (search_it_knowledge_base tool)
@@ -326,10 +314,9 @@ RESPONSE STYLE:
 ERROR HANDLING:
 - If KB search returns no relevant results, say so and offer to create a Jira ticket
 - If a Jira tool fails, explain the error simply"""
-            # ============================================================
             
-            # ============================================================
-            # FIXED: Initialize messages list ONCE before the loop
+            
+            # ===========================================================
             # This maintains conversation history across turns
             # ============================================================
             messages = [
@@ -352,13 +339,13 @@ ERROR HANDLING:
                         print(f"     {i+1:2d}. {tool.name}")
                     continue
                 
-                # ← NEW: Clear conversation history
+                
                 if user_input.lower() == 'clear':
                     messages = [SystemMessage(content=SYSTEM_PROMPT)]
                     print("\n🗑️  Conversation history cleared!")
                     continue
                 
-                # ← NEW: Show history count
+                
                 if user_input.lower() == 'history':
                     print(f"\n📜 Conversation has {len(messages)} messages (including system prompt)")
                     continue
@@ -366,7 +353,7 @@ ERROR HANDLING:
                 if not user_input:
                     continue
                 
-                # Append new user message to existing conversation history
+                
                 messages.append(HumanMessage(content=user_input))
                 
                 print("\n🤖 Processing...")
@@ -392,7 +379,7 @@ ERROR HANDLING:
                             
                             try:
                                 # ============================================
-                                # NEW: Check if it's KB tool or MCP tool
+                                # Check if it's KB tool or MCP tool
                                 # ============================================
                                 if tool_name == "search_it_knowledge_base":
                                     # Execute KB tool locally
@@ -412,10 +399,10 @@ ERROR HANDLING:
                                         print("⚠️ Error (Jira)")
                                     else:
                                         print("✓ (Jira)")
-                                # ============================================
+                                
                                 
                                 if tool_result_text:
-                                    # Show preview (shorter for KB results since they're long)
+                                    
                                     if tool_name == "search_it_knowledge_base":
                                         preview = tool_result_text[:200].replace('\n', ' ')
                                     else:
@@ -463,8 +450,8 @@ if __name__ == "__main__":
     print("  ✓ mcp-atlassian installed (pip)")
     print("  ✓ .env file with Jira credentials")
     print("  ? OPENAI_API_KEY in .env file")
-    print("  ? kb_faiss_index.bin (Knowledge Base)")      # ← NEW
-    print("  ? kb_chunks.pkl (Knowledge Base)")           # ← NEW
+    print("  ? kb_faiss_index.bin (Knowledge Base)")      
+    print("  ? kb_chunks.pkl (Knowledge Base)")           
     print("\nStarting...\n")
     
     try:

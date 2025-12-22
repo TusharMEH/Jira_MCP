@@ -1,3 +1,7 @@
+'''
+Just to check the functioning of MCP-atlassian server
+'''
+
 import os
 import sys
 from dotenv import load_dotenv
